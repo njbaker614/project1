@@ -1,3 +1,313 @@
+<<<<<<< HEAD
+<!DOCTYPE html>
+<html>
+	<head>
+    	<title> Map of London's 1854 cholera epidemic </title>
+    	<script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+	</head>
+		<h1>  Map of London's 1854 cholera epidemic </h1>
+		<svg width="900" height="900">
+		</svg>
+    <style type="text/css">
+      h3 {
+    margin-top: 15px;
+}
+.country-name {
+    margin: 0 !important;
+}
+
+.key-dot {
+    display: inline-block;
+    height: 10px;
+    margin-right: .5em;
+    width: 10px;
+}
+
+.legend {
+    margin-right:20px;
+}
+
+.Street { background: steelblue;}
+.locationofpumps { background: green;}
+.males { background: black;}
+.females {background: pink;
+}
+   </style>
+  </head>
+  <body>
+   <div class="legend1">
+    <h3>Map Legend</h3>
+     <div class="legend1"> <p class="country-name"><span class="key-dot Street"></span>Street lines of London Map</p> </div>
+     <div class="legend1"> <p class="country-name"><span class="key-dot locationofpumps"></span>Pumps</p> </div>
+     <div class="legend1"> <p class="country-name"><span class="key-dot males"></span>Males</p> </div>
+     <div class="legend1"> <p class="country-name"><span class="key-dot females"></span>Females</p> </div>
+  </div>
+</body>
+    </style>
+ 		<script type="text/javascript">
+// Begin Street map of London
+			var arrayofstreet = [];
+			d3.json("streets.json", function(data)
+			{	for (var i=0; i<data.length; i++)
+					{
+					arrayofstreet.push(data[i]);
+					}
+					console.log(arrayofstreet);
+				var M_HEIGHT = 500;
+				var pathGenerator = d3.line()
+					.x(function(d) { return (d.x*25)})
+					.y(function(d) { return (M_HEIGHT-d.y*25)});
+				d3.select("svg")
+					.selectAll("path.streets")
+					.data(data)
+					.enter()
+					.append("path")
+					.attr('class', 'streets')
+					.style('fill', 'none')
+	    			.style('stroke', 'steelblue')
+	    			.style('stroke-width', '2px')
+	    			.attr('d', function(London) {
+	    				return pathGenerator(London)
+	    			});
+			});
+
+// End Street map of London
+// Begin pumps
+			var M_HEIGHT = 500;
+			var arrayofpumps = [];
+			d3.csv("pumps.csv", function(data){
+				arrayofpumps = data;
+			function drawScatterPlot() 
+			{
+				d3.select("svg")
+					.selectAll('circle')
+	    			.data(arrayofpumps)
+	    			.enter()
+	    			.append('circle')
+	    			.style('fill', 'green')
+	    			.attr('r', 4.5)
+	    			.attr('cx', function(d) { return (d.x*25)})
+	    			.attr('cy', function(d) {return (M_HEIGHT- d.y*25)});
+	    	}
+			drawScatterPlot();
+			});
+// End pumps
+// Begin deaths_age_sex
+			var D_height = 500;
+			var arrayofdeathlocation=[];
+			d3.csv("deaths_age_sex.csv", function(data){
+				arrayofdeathlocation=data;
+			function locationofdeath()
+			{
+				d3.select("svg")
+					.selectAll("circle")
+					.data(arrayofdeathlocation)
+					.enter()
+					.append("circle")
+					.style("fill", function(d){
+            if(d.gender==0){
+              return 'pink'
+            }
+            else{
+              return 'black'
+            }
+          })
+					.attr("r", 1.4)
+					.attr('cx', function(d) { return (d.x*25)})
+	    			.attr('cy', function(d) {return (D_height- d.y*25)});
+			}
+			locationofdeath();
+			});
+// End death_age_sex
+// Begin Line Graph
+	// Margin setup
+    var margin = {top: 50, right: 20, bottom: 50, left: 600},
+        width = 1000 - margin.left - margin.right,
+        height = 450 - margin.top - margin.bottom;
+		
+    // Basic SVG canvas
+    var svg1 = d3.select("svg")
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var parseDate = d3.timeParse("%d-%b");
+        	
+    // Temporal scale
+    var x = d3.scaleTime()
+        .domain([new Date(1854,7,19), new Date(1854,8,29)])
+        .range([0, width]);
+
+		// Linear scale
+    var y = d3.scaleLinear()
+        .range([height, height - 200]);
+
+    var line = d3.line()
+        .x(function(d) { return x(d.date); })
+        .y(function(d) { return y(d.deaths); });
+    
+    var g1 = svg1.append("g")
+    	.attr("transform", "translate(10, 0)");
+    
+   	d3.csv("deathdays.csv", function(data) {
+
+      // Pre-processing
+      data.forEach(function(d) {
+				d.deaths = +d.deaths;
+        d["date"] = parseDate(d["date"]);
+      });
+      
+      x.domain(d3.extent(data, function(d) { return d.date; }));
+			y.domain([0, d3.max(data, function(d) { return d.deaths; })]);
+
+
+      g1.selectAll(".deaths").data([data[data.length -1]]).enter()
+       .append("text")
+        .attr("class", "deaths")
+        .attr("y", function(d) { return y(d.deaths); })
+        .attr("x", width - 20)
+        .style("font-size", 10)
+        .style("font-family", "monospace")
+        .text(function(d, i) { return d.deaths; });
+      
+      g1.selectAll("circle").data(data).enter()
+       .append("circle")
+        .attr("cx", function(d) { return x(d.date); })
+        .attr("cy", function(d) { return y(d.deaths); })
+        .attr("r", function(d, i) { return 3; })
+        .attr("id", function(d) { return d.id; })
+        .style("fill", "#fcb0b5")
+        .on("mouseover", function(d){
+
+        	d3.select(this).transition().duration(200).style("fill", "#d30715");
+
+          g1.selectAll("#tooltip").data([d]).enter().append("text")
+            .attr("id", "tooltip")
+            .text(function(d, i) { return d.deaths; })
+            .attr("y", function(d) {return y(d.deaths) - 12})
+            .attr("x", function(d) { return x(d.date); })
+
+          g1.selectAll("#tooltip_path").data([d]).enter().append("line")
+            .attr("id", "tooltip_path")
+            .attr("class", "line")
+            .attr("d", line)
+            .attr("x1", function(d) {return x(d.date)})
+            .attr("x2", function(d) {return x(d.date)})
+            .attr("y1", height)
+            .attr("y2", function(d) {return y(d.deaths)})
+            .attr("stroke", "black")
+            .style("stroke-dasharray", ("3, 3"));
+
+        })
+        .on("mouseout", function(d) {
+          d3.select(this).transition().duration(500).style("fill", "#fcb0b5");
+          g1.selectAll("#tooltip").remove();
+          g1.selectAll("#tooltip_path").remove();
+        });
+
+        g1.selectAll("path.line").data([data]).enter().append("path")
+          .attr("class", "line")
+          .attr("d", line)
+          .style("fill", "none")
+          .style("stroke", "red");
+        // Create X Axis
+        svg1.append("g")
+          .attr("class", "axis")
+          .attr("transform", "translate(9.5," + height + ")")
+          .call(d3.axisBottom(x))
+          .selectAll("text")
+            .style("text-anchor", "middle")
+            .attr("dx", "-2.2em")
+            .attr("dy", "-.5em")
+            .attr("transform", "rotate(-90)")
+          g1.append("text") 
+            .attr("x", width /3)
+            .attr("y", 15+height + margin.bottom)
+            .attr("dy", "-1em")
+            .style("text-anchor", "middle")
+            .style("font-size", 14)
+            .text("Year 1854");
+
+        // Create Y Axis
+        svg1.append("g")      
+          .attr("transform", "translate(9.5," + width/5000 + ")")
+          .call(d3.axisLeft(y)) 
+        .append("text")
+          .attr("fill", "#000")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 550 - margin.left)
+          .attr("x", -70 - (height / 2))
+          .attr("dy", "0.71em")
+          .attr("text-anchor", "middle")
+          .style("font-size", 14)
+          .text("Number of Deaths"); 
+    });
+//End Line Chart
+//Begin Bar Chart
+var margin1 = {top: 500, right: 600, bottom: 700, left: 100},
+    width1 = 1500 - margin1.left - margin1.right,
+    height1 = 1500 - margin1.top - margin1.bottom;
+
+var svg2 = d3.select("svg")
+    .append("g")
+      .attr("transform", "translate(" + margin1.left + "," + margin1.top + ")");
+
+var xt = d3.scaleBand().rangeRound([0, width1]).padding(0.1),
+    yt = d3.scaleLinear().rangeRound([height1, 0]);
+
+var g2 = svg2.append("g")
+      .attr("transform", "translate(10, 0)");
+
+d3.csv("Age_Deaths.csv", function(d) {
+  d.Total_Number_of_Deaths = +d.Total_Number_of_Deaths;
+  return d;
+}, function(error, data) {
+  if (error) throw error;
+
+  xt.domain(data.map(function(d) { return d.Age_Group; }));
+  yt.domain([0, d3.max(data, function(d) { return d.Total_Number_of_Deaths; })]);
+
+  g2.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(0," + height1 + ")")
+      .call(d3.axisBottom(xt));
+
+  svg2.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(9.5," + height1 + ")")
+      .call(d3.axisBottom(xt))
+      g2.append("text") 
+        .attr("x", width1 /2)
+        .attr("y", 1050-margin1.bottom)
+        .attr("dy", "-1em")
+        .style("text-anchor", "middle")
+        .style("font-size", 14)
+        .text("Age Group (Years)");
+
+        // Create Y Axis
+  svg2.append("g")      
+      .attr("transform", "translate(9.5," + width1/5000 + ")")
+      .call(d3.axisLeft(yt)) 
+      .append("text")
+          .attr("fill", "#000")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 50 - margin1.left)
+          .attr("x", 0 - (height1 / 2))
+          .attr("dy", "0.71em")
+          .attr("text-anchor", "middle")
+          .style("font-size", 14)
+          .text("Number of Deaths"); 
+  g2.selectAll(".bar")
+    .data(data)
+    .enter().append("rect")
+      .attr("class", "bar")
+      .attr("x", function(d) { return xt(d.Age_Group); })
+      .attr("y", function(d) { return yt(d.Total_Number_of_Deaths); })
+      .attr("width", xt.bandwidth())
+      .attr("height", function(d) { return height1 - yt(d.Total_Number_of_Deaths); });
+});
+// End Line Graph
+		</script>
+=======
 <!DOCTYPE html>
 <html>
 	<head>
@@ -306,4 +616,5 @@ d3.csv("Project_1/Age_Deaths.csv", function(d) {
 });
 // End Line Graph
 		</script>
+>>>>>>> 4e780b0562b2cb273d29c1c59a82045380a3f0a2
 </html>
